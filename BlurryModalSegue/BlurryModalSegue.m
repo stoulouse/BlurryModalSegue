@@ -8,8 +8,7 @@
 
 #import "BlurryModalSegue.h"
 #import <QuartzCore/QuartzCore.h>
-#import <UIImage+BlurredFrame/UIImage+ImageEffects.h>
-#import <MZAppearance/MZAppearance.h>
+#import "../../UIImage-BlurredFrame/UIImage+ImageEffects.h"
 
 static UIImageOrientation ImageOrientationFromInterfaceOrientation(UIInterfaceOrientation orientation) {
     switch (orientation)
@@ -30,11 +29,6 @@ static UIImageOrientation ImageOrientationFromInterfaceOrientation(UIInterfaceOr
 
 @implementation BlurryModalSegue
 
-+ (id)appearance
-{
-    return [MZAppearance appearanceForClass:[self class]];
-}
-
 - (id)initWithIdentifier:(NSString *)identifier source:(UIViewController *)source destination:(UIViewController *)destination
 {
     self = [super initWithIdentifier:identifier source:source destination:destination];
@@ -44,8 +38,7 @@ static UIImageOrientation ImageOrientationFromInterfaceOrientation(UIInterfaceOr
         // Some sane defaults
         self.backingImageBlurRadius = @(20);
         self.backingImageSaturationDeltaFactor = @(.45f);
-        
-        [[[self class] appearance] applyInvocationTo:self];
+		self.backingImageTintColor = destination.view.backgroundColor;
     }
     
     return self;
@@ -103,7 +96,16 @@ static UIImageOrientation ImageOrientationFromInterfaceOrientation(UIInterfaceOr
     [destination.view addSubview:backgroundImageView];
     [destination.view sendSubviewToBack:backgroundImageView];
     
-    [self.sourceViewController presentModalViewController:self.destinationViewController animated:YES];
+//    [self.sourceViewController presentModalViewController:self.destinationViewController animated:YES];
+	[source.view.superview addSubview: destination.view];
+	CGRect f = source.view.frame;
+	f.origin.y += f.size.height;
+	destination.view.frame = f;
+	[UIView animateWithDuration:0.3f animations:^{
+		destination.view.frame = source.view.frame;
+	}];
+	source.blurryViewController = destination;
+	destination.blurryViewController = source;
     
     [destination.transitionCoordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
         [UIView animateWithDuration:[context transitionDuration] animations:^{
@@ -112,4 +114,58 @@ static UIImageOrientation ImageOrientationFromInterfaceOrientation(UIInterfaceOr
     } completion:nil];
 }
 
+@end
+
+
+
+@implementation BlurryModalUnwindSegue
+
+- (void)perform
+{
+    UIViewController* source = (UIViewController*)self.sourceViewController;
+    UIViewController* destination = (UIViewController*)self.destinationViewController;
+	
+	//    [self.sourceViewController presentModalViewController:self.destinationViewController animated:YES];
+	CGRect f = source.view.frame;
+	f.origin.y += f.size.height;
+	[UIView animateWithDuration:0.3f animations:^{
+		source.view.frame = f;
+	} completion:^(BOOL finished) {
+		[source.view removeFromSuperview];
+		source.blurryViewController = nil;
+		destination.blurryViewController = nil;
+	}];
+}
+
+@end
+
+
+@implementation UIViewController (BlurryModal)
+static NSMutableDictionary* sBlurryModalControllers = nil;
+-(void)initBlurryModal {
+	if (sBlurryModalControllers == nil) {
+		sBlurryModalControllers = [[NSMutableDictionary alloc] init];
+	}
+}
+-(void)setBlurryViewController:(UIViewController *)blurryViewController {
+	[self initBlurryModal];
+	if (blurryViewController == nil) {
+		[sBlurryModalControllers removeObjectForKey:[NSNumber numberWithUnsignedInteger:(uintptr_t) self]];
+	 } else {
+		[sBlurryModalControllers setObject:blurryViewController forKey:[NSNumber numberWithUnsignedInteger:(uintptr_t) self]];
+	}
+}
+-(UIViewController*)blurryViewController {
+	[self initBlurryModal];
+	return [sBlurryModalControllers objectForKey:[NSNumber numberWithUnsignedInteger:(uintptr_t) self]];
+}
+- (IBAction)dismissBlurryModal:(id)sender {
+	UIViewController* parent = self.blurryViewController;
+	if (parent) {
+		BlurryModalUnwindSegue* segue = [[BlurryModalUnwindSegue alloc] initWithIdentifier:@"" source:self destination:parent];
+		[self prepareForSegue:segue sender:sender];
+		[segue perform];
+		NSLog(@"");
+	}
+}
 @end
