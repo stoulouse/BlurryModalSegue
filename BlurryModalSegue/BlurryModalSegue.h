@@ -20,15 +20,6 @@ typedef UIImage*(^ProcessBackgroundImage)(BlurryModalSegue* blurryModalSegue, UI
 @property (nonatomic) NSNumber* backingImageSaturationDeltaFactor UI_APPEARANCE_SELECTOR;
 @property (nonatomic) UIColor* backingImageTintColor UI_APPEARANCE_SELECTOR;
 
-@end
++ (id)appearance;
 
-
-@interface BlurryModalUnwindSegue : UIStoryboardSegue
-@end
-
-
-
-@interface UIViewController (BlurryModal)
-@property (nonatomic, strong) UIViewController* blurryViewController;
-- (IBAction)dismissBlurryModal: (UIStoryboardSegue*) segue;
 @end
