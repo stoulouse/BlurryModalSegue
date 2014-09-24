@@ -11,6 +11,20 @@
 #import "UIImage+BlurredFrame/UIImage+ImageEffects.h"
 #import "MZAppearance/MZAppearance.h"
 
+@interface TouchImageView : UIImageView
+@property (nonatomic, strong) void(^touchedBlock)();
+@end
+@implementation TouchImageView
+-(void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
+	UITouch* t = [touches anyObject];
+	if (t.tapCount == 1) {
+		if (self.touchedBlock) {
+			self.touchedBlock();
+		}
+	}
+}
+@end
+
 static UIImageOrientation ImageOrientationFromInterfaceOrientation(UIInterfaceOrientation orientation) {
     switch (orientation)
     {
@@ -84,7 +98,13 @@ static UIImageOrientation ImageOrientationFromInterfaceOrientation(UIInterfaceOr
     
     destination.view.clipsToBounds = YES;
     
-    UIImageView* backgroundImageView = [[UIImageView alloc] initWithImage:snapshot];
+    TouchImageView* backgroundImageView = [[TouchImageView alloc] initWithImage:snapshot];
+	backgroundImageView.touchedBlock = ^() {
+		[source dismissViewControllerAnimated:YES completion:^{
+			
+		}];
+	};
+	backgroundImageView.userInteractionEnabled = YES;
 
     CGRect frame;
     switch (destination.modalTransitionStyle) {
