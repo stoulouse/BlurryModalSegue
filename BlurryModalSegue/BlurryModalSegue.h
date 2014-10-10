@@ -22,4 +22,7 @@ typedef UIImage*(^ProcessBackgroundImage)(BlurryModalSegue* blurryModalSegue, UI
 
 + (id)appearance;
 
+- (instancetype)initWithIdentifier:(NSString *)identifier source:(UIViewController *)source destination:(UIViewController *)destination completion:(void(^)())touchedBlock;
+@property (nonatomic, strong) void(^touchedBlock)();
+
 @end

@@ -44,6 +44,11 @@ static UIImageOrientation ImageOrientationFromInterfaceOrientation(UIInterfaceOr
 
 @implementation BlurryModalSegue
 
+- (instancetype)initWithIdentifier:(NSString *)identifier source:(UIViewController *)source destination:(UIViewController *)destination completion:(void(^)())touchedBlock {
+	BlurryModalSegue* result = [self initWithIdentifier:identifier source:source destination:destination];
+	result.touchedBlock = touchedBlock;
+	return result;
+}
 + (id)appearance
 {
     return [MZAppearance appearanceForClass:[self class]];
@@ -100,8 +105,9 @@ static UIImageOrientation ImageOrientationFromInterfaceOrientation(UIInterfaceOr
     
     TouchImageView* backgroundImageView = [[TouchImageView alloc] initWithImage:snapshot];
 	backgroundImageView.touchedBlock = ^() {
+		if (self.touchedBlock)
+			self.touchedBlock();
 		[source dismissViewControllerAnimated:YES completion:^{
-			
 		}];
 	};
 	backgroundImageView.userInteractionEnabled = YES;
